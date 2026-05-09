@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yahoo 台灣選舉新聞</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tab-btn { border-bottom: 2px solid transparent; transition: border-color .15s, color .15s; }
+    .tab-btn.active { border-bottom-color: #2563eb; color: #2563eb; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .line-clamp-1 { display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-gray-900 text-sm">
+
+  <header class="bg-white border-b px-6 py-4 shadow-sm sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-base font-bold text-gray-800">Yahoo 台灣選舉新聞</h1>
+        <p id="stats" class="text-xs text-gray-400 mt-0.5">載入中…</p>
+      </div>
+    </div>
+  </header>
+
+  <nav class="bg-white border-b px-6">
+    <div class="max-w-5xl mx-auto flex gap-6">
+      <button class="tab-btn active py-3 text-sm font-medium text-gray-700" onclick="showTab('fetch',this)">抓取 / 同步</button>
+      <button class="tab-btn py-3 text-sm font-medium text-gray-700" onclick="showTab('search',this)">搜尋</button>
+      <button class="tab-btn py-3 text-sm font-medium text-gray-700" onclick="showTab('list',this)">文章列表</button>
+      <button class="tab-btn py-3 text-sm font-medium text-gray-700" onclick="showTab('timeline',this)">趨勢圖</button>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto p-6">
+
+    <!-- 抓取 / 同步 -->
+    <div id="tab-fetch" class="tab-panel active">
+      <div class="bg-white rounded-xl shadow p-6 mb-4">
+        <h2 class="font-semibold text-gray-800 mb-4">抓取文章</h2>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">縣市</label>
+            <select id="f-county" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">（不指定，預設彰化）</option>
+              <option value="changhua">彰化縣</option>
+              <option value="taipei">台北市</option>
+              <option value="taichung">台中市</option>
+              <option value="kaohsiung">高雄市</option>
+              <option value="tainan">台南市</option>
+              <option value="taoyuan">桃園市</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">關鍵字（逗號分隔）</label>
+            <input id="f-keyword" type="text" placeholder="例：王惠美,陳世凱"
+              class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-4 mb-4 items-end">
+          <label class="flex items-center gap-2 text-gray-600 cursor-pointer select-none">
+            <input type="checkbox" id="f-all" class="rounded"> 抓取全部（不過濾）
+          </label>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">同步起始日期（留空 = 上次同步時間）</label>
+            <input id="f-since" type="date"
+              class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <button id="btn-fetch" onclick="doFetch()"
+            class="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50">抓取</button>
+          <button id="btn-sync" onclick="doSync()"
+            class="bg-emerald-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-emerald-700 transition disabled:opacity-50">增量同步</button>
+        </div>
+      </div>
+      <div id="fetch-log"
+        class="hidden bg-gray-950 text-green-400 rounded-xl p-4 font-mono text-xs h-72 overflow-y-auto leading-relaxed"></div>
+    </div>
+
+    <!-- 搜尋 -->
+    <div id="tab-search" class="tab-panel">
+      <div class="bg-white rounded-xl shadow p-6 mb-4">
+        <div class="flex gap-3">
+          <input id="s-q" type="text" placeholder="輸入關鍵字（FTS5 全文搜尋）…"
+            class="flex-1 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onkeydown="if(event.key==='Enter') doSearch()">
+          <input id="s-limit" type="number" value="20" min="1" max="200"
+            class="w-20 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none text-center">
+          <button onclick="doSearch()"
+            class="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition">搜尋</button>
+        </div>
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+    <!-- 文章列表 -->
+    <div id="tab-list" class="tab-panel">
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex flex-wrap gap-3 items-end">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">關鍵字</label>
+            <input id="l-keyword" type="text" placeholder="過濾"
+              class="border border-gray-200 rounded-lg px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">起始日期</label>
+            <input id="l-from" type="date" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">結束日期</label>
+            <input id="l-to" type="date" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">筆數</label>
+            <select id="l-limit" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+              <option value="50">50 篇</option>
+              <option value="100">100 篇</option>
+              <option value="200">200 篇</option>
+              <option value="0">全部</option>
+            </select>
+          </div>
+          <button onclick="doList()"
+            class="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition">查詢</button>
+          <button onclick="doExport('csv')"
+            class="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition">匯出 CSV</button>
+          <button onclick="doExport('markdown')"
+            class="border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition">匯出 Markdown</button>
+        </div>
+      </div>
+      <div id="list-results"></div>
+    </div>
+
+    <!-- 趨勢圖 -->
+    <div id="tab-timeline" class="tab-panel">
+      <div class="bg-white rounded-xl shadow p-4 mb-4">
+        <div class="flex gap-3 items-end">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">起始日期</label>
+            <input id="tl-from" type="date" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">結束日期</label>
+            <input id="tl-to" type="date" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+          </div>
+          <button onclick="doTimeline()"
+            class="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition">顯示</button>
+        </div>
+      </div>
+      <div id="timeline-chart" class="bg-white rounded-xl shadow p-6 min-h-24"></div>
+    </div>
+
+  </main>
+
+  <script>
+    // ---- Tab switching ----
+    function showTab(name, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      btn.classList.add('active');
+      if (name === 'list') doList();
+      if (name === 'timeline') doTimeline();
+    }
+
+    // ---- Stats ----
+    function loadStats() {
+      fetch('/api/stats').then(r => r.json()).then(d => {
+        document.getElementById('stats').textContent =
+          '資料庫：' + d.count + ' 篇文章' + (d.lastSync ? '，上次同步：' + d.lastSync : '，尚未同步');
+      }).catch(() => {
+        document.getElementById('stats').textContent = '無法連線至伺服器';
+      });
+    }
+    loadStats();
+
+    // ---- SSE streaming (fetch / sync) ----
+    var activeSSE = null;
+    function startSSE(url) {
+      var log = document.getElementById('fetch-log');
+      log.classList.remove('hidden');
+      log.innerHTML = '';
+      if (activeSSE) { activeSSE.close(); }
+      setBusy(true);
+
+      activeSSE = new EventSource(url);
+      activeSSE.onmessage = function(e) {
+        var line = document.createElement('div');
+        var msg = e.data;
+        if (msg.startsWith('ERROR'))       line.className = 'text-red-400';
+        else if (msg.startsWith('  ✓'))    line.className = 'text-green-300';
+        else if (msg === 'DONE')           line.className = 'text-yellow-300 font-bold';
+        else if (msg.startsWith('  ⚠'))    line.className = 'text-orange-400';
+        line.textContent = msg;
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+        if (msg === 'DONE' || msg.startsWith('ERROR')) {
+          activeSSE.close(); activeSSE = null;
+          setBusy(false);
+          loadStats();
+        }
+      };
+      activeSSE.onerror = function() {
+        var line = document.createElement('div');
+        line.className = 'text-red-400';
+        line.textContent = '連線中斷';
+        log.appendChild(line);
+        if (activeSSE) { activeSSE.close(); activeSSE = null; }
+        setBusy(false);
+      };
+    }
+
+    function setBusy(busy) {
+      document.getElementById('btn-fetch').disabled = busy;
+      document.getElementById('btn-sync').disabled = busy;
+    }
+
+    function doFetch() {
+      var params = new URLSearchParams({
+        county:  document.getElementById('f-county').value,
+        keyword: document.getElementById('f-keyword').value,
+        all:     document.getElementById('f-all').checked ? 'true' : 'false'
+      });
+      startSSE('/api/fetch?' + params);
+    }
+
+    function doSync() {
+      var since = document.getElementById('f-since').value || 'last';
+      var params = new URLSearchParams({
+        county:  document.getElementById('f-county').value,
+        keyword: document.getElementById('f-keyword').value,
+        since:   since
+      });
+      startSSE('/api/sync?' + params);
+    }
+
+    // ---- Article table ----
+    function renderTable(articles, container) {
+      if (!articles || articles.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 py-4">找不到文章，請先抓取。</p>';
+        return;
+      }
+      var rows = articles.map(function(a) {
+        var kw = (a.keywords || []).slice(0, 4).join('、');
+        var desc = a.description
+          ? '<p class="text-xs text-gray-400 mt-0.5 line-clamp-1">' + esc(a.description) + '</p>' : '';
+        return '<tr class="border-t hover:bg-gray-50">' +
+          '<td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">' + esc(a.date_published) + '</td>' +
+          '<td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">' + esc(a.provider) + '</td>' +
+          '<td class="px-4 py-3"><a href="' + esc(a.url) + '" target="_blank" class="text-blue-600 hover:underline">' + esc(a.headline) + '</a>' + desc + '</td>' +
+          '<td class="px-4 py-3 text-xs text-gray-400">' + esc(kw) + '</td>' +
+          '</tr>';
+      }).join('');
+      container.innerHTML =
+        '<div class="bg-white rounded-xl shadow overflow-hidden">' +
+        '<p class="text-xs text-gray-400 px-4 py-2 border-b">共 ' + articles.length + ' 篇</p>' +
+        '<div class="overflow-x-auto"><table class="w-full">' +
+        '<thead class="bg-gray-50 text-xs text-gray-500">' +
+        '<tr><th class="px-4 py-2 text-left font-medium">日期</th>' +
+        '<th class="px-4 py-2 text-left font-medium">來源</th>' +
+        '<th class="px-4 py-2 text-left font-medium">標題</th>' +
+        '<th class="px-4 py-2 text-left font-medium">關鍵字</th></tr>' +
+        '</thead><tbody>' + rows + '</tbody></table></div></div>';
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ---- Search ----
+    function doSearch() {
+      var q = document.getElementById('s-q').value.trim();
+      if (!q) return;
+      var limit = document.getElementById('s-limit').value || 20;
+      fetch('/api/search?' + new URLSearchParams({ q: q, limit: limit }))
+        .then(function(r) { return r.json(); })
+        .then(function(data) { renderTable(data, document.getElementById('search-results')); });
+    }
+
+    // ---- List ----
+    function doList() {
+      var params = new URLSearchParams({
+        keyword: document.getElementById('l-keyword').value,
+        from:    document.getElementById('l-from').value,
+        to:      document.getElementById('l-to').value,
+        limit:   document.getElementById('l-limit').value
+      });
+      fetch('/api/articles?' + params)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { renderTable(data, document.getElementById('list-results')); });
+    }
+
+    // ---- Export ----
+    function doExport(format) {
+      var keyword = document.getElementById('l-keyword').value;
+      window.location = '/api/export?' + new URLSearchParams({ format: format, keyword: keyword });
+    }
+
+    // ---- Timeline ----
+    function doTimeline() {
+      var from = document.getElementById('tl-from').value;
+      var to   = document.getElementById('tl-to').value;
+      fetch('/api/timeline?' + new URLSearchParams({ from: from, to: to }))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var el = document.getElementById('timeline-chart');
+          var entries = Object.keys(data).sort().map(function(d) { return [d, data[d]]; });
+          if (entries.length === 0) {
+            el.innerHTML = '<p class="text-gray-400">無資料，請先抓取文章。</p>';
+            return;
+          }
+          var max = Math.max.apply(null, entries.map(function(e) { return e[1]; }));
+          el.innerHTML = entries.map(function(e) {
+            var d = e[0], n = e[1];
+            var pct = max > 0 ? Math.round(n / max * 100) : 0;
+            return '<div class="flex items-center gap-3 mb-2">' +
+              '<span class="text-xs text-gray-400 w-24 shrink-0">' + esc(d) + '</span>' +
+              '<div class="flex-1 bg-gray-100 rounded h-5 overflow-hidden">' +
+              '<div class="bg-blue-500 h-full rounded" style="width:' + pct + '%"></div>' +
+              '</div>' +
+              '<span class="text-xs text-gray-600 w-5 text-right">' + n + '</span>' +
+              '</div>';
+          }).join('');
+        });
+    }
+  </script>
+</body>
+</html>
