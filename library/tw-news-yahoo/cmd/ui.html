@@ -55,7 +55,7 @@
         <div class="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">縣市</label>
-            <select id="f-county" class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select id="f-county" class="w-full border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">（不指定，預設彰化）</option>
               <option value="changhua">彰化縣</option>
               <option value="taipei">台北市</option>
@@ -68,17 +68,17 @@
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">關鍵字（逗號分隔）</label>
             <input id="f-keyword" type="text" placeholder="例：王惠美,陳素月"
-              class="w-full border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              class="w-full border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
-        </div>
-        <div class="flex flex-wrap gap-4 mb-4 items-end">
-          <label class="flex items-center gap-2 text-gray-600 cursor-pointer select-none">
-            <input type="checkbox" id="f-all" class="rounded"> 抓取全部（不過濾）
-          </label>
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">同步起始日期（留空 = 上次同步時間）</label>
             <input id="f-since" type="date"
-              class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              class="w-full border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div class="flex items-end">
+            <label class="flex items-center gap-2 text-gray-600 cursor-pointer select-none pb-0.5">
+              <input type="checkbox" id="f-all" class="rounded"> 抓取全部（不過濾）
+            </label>
           </div>
         </div>
         <div class="flex gap-3">
@@ -97,10 +97,10 @@
       <div class="bg-white rounded-xl shadow p-6 mb-4">
         <div class="flex gap-3">
           <input id="s-q" type="text" placeholder="輸入關鍵字（FTS5 全文搜尋）…"
-            class="flex-1 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="flex-1 border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             onkeydown="if(event.key==='Enter') doSearch()">
           <input id="s-limit" type="number" value="20" min="1" max="200"
-            class="w-20 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none text-center">
+            class="w-20 border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none text-center">
           <button onclick="doSearch()"
             class="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition">搜尋</button>
         </div>
@@ -110,30 +110,34 @@
 
     <!-- 文章列表 -->
     <div id="tab-list" class="tab-panel">
-      <div class="bg-white rounded-xl shadow p-4 mb-4">
-        <div class="flex flex-wrap gap-3 items-end">
+      <div class="bg-white rounded-xl shadow p-6 mb-4">
+        <h2 class="font-semibold text-gray-800 mb-4">文章列表</h2>
+        <div class="grid grid-cols-4 gap-4 mb-4">
           <div>
-            <label class="block text-xs text-gray-500 mb-1">關鍵字</label>
+            <label class="block text-xs font-medium text-gray-500 mb-1">關鍵字</label>
             <input id="l-keyword" type="text" placeholder="過濾"
-              class="border border-gray-200 rounded-lg px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              class="w-full border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onkeydown="if(event.key==='Enter') doList()">
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">起始日期</label>
-            <input id="l-from" type="date" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+            <label class="block text-xs font-medium text-gray-500 mb-1">起始日期</label>
+            <input id="l-from" type="date" class="w-full border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">結束日期</label>
-            <input id="l-to" type="date" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+            <label class="block text-xs font-medium text-gray-500 mb-1">結束日期</label>
+            <input id="l-to" type="date" class="w-full border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
           <div>
-            <label class="block text-xs text-gray-500 mb-1">筆數</label>
-            <select id="l-limit" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+            <label class="block text-xs font-medium text-gray-500 mb-1">筆數</label>
+            <select id="l-limit" class="w-full border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="50">50 篇</option>
               <option value="100">100 篇</option>
               <option value="200">200 篇</option>
               <option value="0">全部</option>
             </select>
           </div>
+        </div>
+        <div class="flex gap-3">
           <button onclick="doList()"
             class="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition">查詢</button>
           <button onclick="doExport('csv')"
@@ -151,11 +155,11 @@
         <div class="flex gap-3 items-end">
           <div>
             <label class="block text-xs text-gray-500 mb-1">起始日期</label>
-            <input id="tl-from" type="date" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+            <input id="tl-from" type="date" class="border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none">
           </div>
           <div>
             <label class="block text-xs text-gray-500 mb-1">結束日期</label>
-            <input id="tl-to" type="date" class="border border-gray-200 rounded-lg px-3 py-2 focus:outline-none">
+            <input id="tl-to" type="date" class="border border-gray-200 h-10 rounded-lg px-3 py-2 focus:outline-none">
           </div>
           <button onclick="doTimeline()"
             class="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition">顯示</button>
