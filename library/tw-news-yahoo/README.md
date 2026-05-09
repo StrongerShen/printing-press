@@ -48,7 +48,7 @@ tw-news-yahoo fetch
 
 ### 依縣市代碼抓取（展開為預設候選人關鍵字包）
 ```bash
-tw-news-yahoo fetch --county changhua   # 彰化：彰化縣長、王惠美、陳世凱…
+tw-news-yahoo fetch --county changhua   # 彰化：彰化縣長、王惠美、陳素月…
 tw-news-yahoo fetch --county taipei     # 台北：台北市長、蔣萬安…
 tw-news-yahoo fetch --county taichung   # 台中：台中市長、盧秀燕…
 tw-news-yahoo fetch --county kaohsiung  # 高雄：高雄市長、陳其邁…
@@ -58,12 +58,12 @@ tw-news-yahoo fetch --county taoyuan    # 桃園：桃園市長…
 
 ### 自訂關鍵字
 ```bash
-tw-news-yahoo fetch --keyword 彰化縣長,王惠美,陳世凱
+tw-news-yahoo fetch --keyword 彰化縣長,王惠美,陳素月
 ```
 
 ### 混用縣市 + 額外關鍵字
 ```bash
-tw-news-yahoo fetch --county changhua --keyword 陳世凱
+tw-news-yahoo fetch --county changhua --keyword 陳素月
 ```
 
 ### 抓取全部選舉新聞（不過濾）

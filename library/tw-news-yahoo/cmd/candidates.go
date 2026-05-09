@@ -13,7 +13,7 @@ var countyProfiles = map[string]struct {
 	zhName     string
 	candidates []string
 }{
-	"changhua": {"彰化", []string{"彰化縣長", "王惠美", "陳世凱", "彰化選舉", "彰化縣"}},
+	"changhua": {"彰化", []string{"彰化縣長", "王惠美", "陳素月", "彰化選舉", "彰化縣"}},
 	"taipei":   {"台北", []string{"台北市長", "蔣萬安", "台北市"}},
 	"taichung": {"台中", []string{"台中市長", "盧秀燕", "台中市"}},
 	"kaohsiung": {"高雄", []string{"高雄市長", "陳其邁", "高雄市"}},
