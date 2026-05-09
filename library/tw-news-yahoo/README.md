@@ -136,6 +136,22 @@ tw-news-yahoo ui
 - **文章列表** — 關鍵字 / 日期過濾，一鍵匯出 CSV / Markdown
 - **趨勢圖** — 依日期範圍顯示每日文章數長條圖
 
+#### 每縣市獨立資料庫
+
+右上角的**資料庫**下拉可切換目標 SQLite 檔案：
+
+| 選項 | 路徑 |
+|------|------|
+| 預設 (news.db) | `~/.tw-news-yahoo/news.db` |
+| 彰化縣 | `~/.tw-news-yahoo/changhua.db` |
+| 台北市 | `~/.tw-news-yahoo/taipei.db` |
+| 台中市 | `~/.tw-news-yahoo/taichung.db` |
+| 高雄市 | `~/.tw-news-yahoo/kaohsiung.db` |
+| 台南市 | `~/.tw-news-yahoo/tainan.db` |
+| 桃園市 | `~/.tw-news-yahoo/taoyuan.db` |
+
+選擇縣市後抓取，文章會寫入對應的 `.db` 檔，各縣市資料互不干擾。切換縣市下拉時，資料庫選擇器會自動同步。
+
 ```bash
 # 指定埠號
 tw-news-yahoo ui --port 9000
