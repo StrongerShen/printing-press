@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -106,6 +108,7 @@ func sseStream(w http.ResponseWriter, r *http.Request, run func(chan<- string)) 
 
 func handleUIFetch(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
+	db := getDB(r)
 	county := q.Get("county")
 	keyword := q.Get("keyword")
 	all := q.Get("all") == "true"
@@ -114,12 +117,13 @@ func handleUIFetch(w http.ResponseWriter, r *http.Request) {
 		topicURL = "https://tw.news.yahoo.com/topic/2026election/"
 	}
 	sseStream(w, r, func(ch chan<- string) {
-		uiFetchProgress(county, keyword, all, topicURL, ch)
+		uiFetchProgress(db, county, keyword, all, topicURL, ch)
 	})
 }
 
 func handleUISync(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
+	db := getDB(r)
 	county := q.Get("county")
 	keyword := q.Get("keyword")
 	since := q.Get("since")
@@ -131,12 +135,12 @@ func handleUISync(w http.ResponseWriter, r *http.Request) {
 		topicURL = "https://tw.news.yahoo.com/topic/2026election/"
 	}
 	sseStream(w, r, func(ch chan<- string) {
-		uiSyncProgress(county, keyword, since, topicURL, ch)
+		uiSyncProgress(db, county, keyword, since, topicURL, ch)
 	})
 }
 
 func handleArticles(w http.ResponseWriter, r *http.Request) {
-	st, err := store.Open(dbPath)
+	st, err := store.Open(getDB(r))
 	if err != nil {
 		jsonErr(w, err)
 		return
@@ -167,7 +171,7 @@ func handleArticles(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSearch(w http.ResponseWriter, r *http.Request) {
-	st, err := store.Open(dbPath)
+	st, err := store.Open(getDB(r))
 	if err != nil {
 		jsonErr(w, err)
 		return
@@ -185,7 +189,7 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleTimeline(w http.ResponseWriter, r *http.Request) {
-	st, err := store.Open(dbPath)
+	st, err := store.Open(getDB(r))
 	if err != nil {
 		jsonErr(w, err)
 		return
@@ -218,7 +222,7 @@ func handleTimeline(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStats(w http.ResponseWriter, r *http.Request) {
-	st, err := store.Open(dbPath)
+	st, err := store.Open(getDB(r))
 	if err != nil {
 		jsonErr(w, err)
 		return
@@ -237,7 +241,7 @@ func handleStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleUIExport(w http.ResponseWriter, r *http.Request) {
-	st, err := store.Open(dbPath)
+	st, err := store.Open(getDB(r))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -273,8 +277,9 @@ func handleUIExport(w http.ResponseWriter, r *http.Request) {
 
 // ---- progress workers ----
 
-func uiFetchProgress(county, keyword string, all bool, topicURL string, ch chan<- string) {
-	st, err := store.Open(dbPath)
+func uiFetchProgress(db, county, keyword string, all bool, topicURL string, ch chan<- string) {
+	ch <- "資料庫：" + db
+	st, err := store.Open(db)
 	if err != nil {
 		ch <- "ERROR: " + err.Error()
 		return
@@ -325,8 +330,9 @@ func uiFetchProgress(county, keyword string, all bool, topicURL string, ch chan<
 	ch <- "DONE"
 }
 
-func uiSyncProgress(county, keyword, since, topicURL string, ch chan<- string) {
-	st, err := store.Open(dbPath)
+func uiSyncProgress(db, county, keyword, since, topicURL string, ch chan<- string) {
+	ch <- "資料庫：" + db
+	st, err := store.Open(db)
 	if err != nil {
 		ch <- "ERROR: " + err.Error()
 		return
@@ -425,6 +431,23 @@ func uiBuildFilters(county, keyword string, all bool, ch chan<- string) []string
 		ch <- "（未指定縣市或關鍵字，預設過濾「彰化」）"
 	}
 	return filters
+}
+
+// getDB resolves the db query param to a file path.
+// "default" or empty → global dbPath; county name → ~/.tw-news-yahoo/<county>.db; otherwise → literal path.
+func getDB(r *http.Request) string {
+	db := r.URL.Query().Get("db")
+	if db == "" || db == "default" {
+		return dbPath
+	}
+	if _, ok := countyProfiles[db]; ok {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return dbPath
+		}
+		return filepath.Join(home, ".tw-news-yahoo", db+".db")
+	}
+	return db
 }
 
 // ---- helpers ----

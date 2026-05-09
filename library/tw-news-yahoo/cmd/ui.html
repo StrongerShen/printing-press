@@ -16,10 +16,23 @@
 <body class="bg-gray-50 min-h-screen text-gray-900 text-sm">
 
   <header class="bg-white border-b px-6 py-4 shadow-sm sticky top-0 z-10">
-    <div class="max-w-5xl mx-auto flex justify-between items-center">
+    <div class="max-w-5xl mx-auto flex justify-between items-center gap-4">
       <div>
         <h1 class="text-base font-bold text-gray-800">Yahoo 台灣選舉新聞</h1>
         <p id="stats" class="text-xs text-gray-400 mt-0.5">載入中…</p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <label class="text-xs text-gray-500 whitespace-nowrap">資料庫</label>
+        <select id="db-select" onchange="onDBChange()"
+          class="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+          <option value="default">預設 (news.db)</option>
+          <option value="changhua">彰化縣</option>
+          <option value="taipei">台北市</option>
+          <option value="taichung">台中市</option>
+          <option value="kaohsiung">高雄市</option>
+          <option value="tainan">台南市</option>
+          <option value="taoyuan">桃園市</option>
+        </select>
       </div>
     </div>
   </header>
@@ -154,6 +167,23 @@
   </main>
 
   <script>
+    // ---- DB selector ----
+    function getSelectedDB() {
+      return document.getElementById('db-select').value || 'default';
+    }
+
+    function onDBChange() {
+      loadStats();
+      // Refresh whichever data tab is visible
+      var active = document.querySelector('.tab-panel.active');
+      if (active) {
+        var id = active.id;
+        if (id === 'tab-list') doList();
+        else if (id === 'tab-search') { /* no auto-refresh for search */ }
+        else if (id === 'tab-timeline') doTimeline();
+      }
+    }
+
     // ---- Tab switching ----
     function showTab(name, btn) {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -166,7 +196,8 @@
 
     // ---- Stats ----
     function loadStats() {
-      fetch('/api/stats').then(r => r.json()).then(d => {
+      var db = getSelectedDB();
+      fetch('/api/stats?' + new URLSearchParams({ db: db })).then(r => r.json()).then(d => {
         document.getElementById('stats').textContent =
           '資料庫：' + d.count + ' 篇文章' + (d.lastSync ? '，上次同步：' + d.lastSync : '，尚未同步');
       }).catch(() => {
@@ -218,6 +249,7 @@
 
     function doFetch() {
       var params = new URLSearchParams({
+        db:      getSelectedDB(),
         county:  document.getElementById('f-county').value,
         keyword: document.getElementById('f-keyword').value,
         all:     document.getElementById('f-all').checked ? 'true' : 'false'
@@ -228,12 +260,27 @@
     function doSync() {
       var since = document.getElementById('f-since').value || 'last';
       var params = new URLSearchParams({
+        db:      getSelectedDB(),
         county:  document.getElementById('f-county').value,
         keyword: document.getElementById('f-keyword').value,
         since:   since
       });
       startSSE('/api/sync?' + params);
     }
+
+    // Auto-sync DB selector when county changes
+    document.getElementById('f-county').addEventListener('change', function() {
+      var county = this.value;
+      var dbSel = document.getElementById('db-select');
+      var countyToDb = {
+        '': 'default', 'changhua': 'changhua', 'taipei': 'taipei',
+        'taichung': 'taichung', 'kaohsiung': 'kaohsiung', 'tainan': 'tainan', 'taoyuan': 'taoyuan'
+      };
+      if (countyToDb[county] !== undefined) {
+        dbSel.value = countyToDb[county];
+        loadStats();
+      }
+    });
 
     // ---- Article table ----
     function renderTable(articles, container) {
@@ -273,7 +320,7 @@
       var q = document.getElementById('s-q').value.trim();
       if (!q) return;
       var limit = document.getElementById('s-limit').value || 20;
-      fetch('/api/search?' + new URLSearchParams({ q: q, limit: limit }))
+      fetch('/api/search?' + new URLSearchParams({ db: getSelectedDB(), q: q, limit: limit }))
         .then(function(r) { return r.json(); })
         .then(function(data) { renderTable(data, document.getElementById('search-results')); });
     }
@@ -281,6 +328,7 @@
     // ---- List ----
     function doList() {
       var params = new URLSearchParams({
+        db:      getSelectedDB(),
         keyword: document.getElementById('l-keyword').value,
         from:    document.getElementById('l-from').value,
         to:      document.getElementById('l-to').value,
@@ -294,14 +342,14 @@
     // ---- Export ----
     function doExport(format) {
       var keyword = document.getElementById('l-keyword').value;
-      window.location = '/api/export?' + new URLSearchParams({ format: format, keyword: keyword });
+      window.location = '/api/export?' + new URLSearchParams({ db: getSelectedDB(), format: format, keyword: keyword });
     }
 
     // ---- Timeline ----
     function doTimeline() {
       var from = document.getElementById('tl-from').value;
       var to   = document.getElementById('tl-to').value;
-      fetch('/api/timeline?' + new URLSearchParams({ from: from, to: to }))
+      fetch('/api/timeline?' + new URLSearchParams({ db: getSelectedDB(), from: from, to: to }))
         .then(function(r) { return r.json(); })
         .then(function(data) {
           var el = document.getElementById('timeline-chart');
