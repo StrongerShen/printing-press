@@ -4,18 +4,29 @@ Yahoo 台灣新聞 CLI — 追蹤 2026 縣市長選情
 
 從 `tw.news.yahoo.com/topic/2026election/` 抓取選舉新聞，依關鍵字（如「彰化縣長」）過濾後存入本機 SQLite，支援離線搜尋。
 
+**GitHub：** https://github.com/StrongerShen/2026election
+
 ## 安裝
 
-### macOS / Linux
+### 方式一：直接下載預編譯 binary
+
+從 GitHub 下載對應平台的執行檔，無需安裝 Go：
+
+- **macOS（arm64）：** `tw-news-yahoo`
+- **Windows（amd64）：** `tw-news-yahoo.exe`
+
+### 方式二：從原始碼編譯
+
+#### macOS / Linux
 ```bash
-cd ~/printing-press/library/tw-news-yahoo
+git clone https://github.com/StrongerShen/2026election.git
+cd 2026election
 go build -o tw-news-yahoo .
 mv tw-news-yahoo /usr/local/bin/   # 或加入 PATH
 ```
 
-### Windows（cross-compile，在 macOS 上產出）
+#### Windows（cross-compile，在 macOS 上產出）
 ```bash
-cd ~/printing-press/library/tw-news-yahoo
 GOOS=windows GOARCH=amd64 go build -o tw-news-yahoo.exe .
 ```
 

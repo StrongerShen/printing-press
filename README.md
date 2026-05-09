@@ -2,11 +2,13 @@
 
 本機 CLI 工具集，由 [Printing Press](https://github.com/mvanhorn/cli-printing-press) 生成。
 
+**GitHub：** https://github.com/StrongerShen/printing-press
+
 ## 工具清單
 
-| 工具 | 說明 | 位置 |
-|------|------|------|
-| [tw-news-yahoo](library/tw-news-yahoo/) | Yahoo 台灣新聞 CLI，追蹤 2026 縣市長選情 | `library/tw-news-yahoo/` |
+| 工具 | 說明 | 獨立 Repo |
+|------|------|-----------|
+| [tw-news-yahoo](library/tw-news-yahoo/) | Yahoo 台灣新聞 CLI，追蹤 2026 縣市長選情 | [StrongerShen/2026election](https://github.com/StrongerShen/2026election) |
 
 ## 快速開始
 
