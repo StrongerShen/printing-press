@@ -1,0 +1,3 @@
+[submodule "library/tw-news-yahoo"]
+	path = library/tw-news-yahoo
+	url = https://github.com/StrongerShen/2026election.git
